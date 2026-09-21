@@ -8,7 +8,7 @@ Version: **v0.2**
 
 ## GitHub Pages
 
-(Project Page|https://ludes-pesc.github.io/ProcessChallenge/)
+[Project Page|https://ludes-pesc.github.io/ProcessChallenge/]
 
 GitHub Pages is configured to publish directly from **`main:/docs`**. The complete public site lives in **`docs/`**:
 
