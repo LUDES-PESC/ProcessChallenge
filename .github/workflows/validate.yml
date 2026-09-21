@@ -289,7 +289,7 @@ jobs:
           q=next((x for x in bank if x["qid"]=="EV-TIMER-WAIT"),None)
           if not q or q.get("answer")!="timerIntermediate":
               raise SystemExit("EV-TIMER-WAIT is missing or incorrect")
-          for required in ["m.diagram==='rings'&&ok","await new Promise(r=>setTimeout","dl('reminder')","dl('continue')"]:
+          for required in ["m.qid==='EV-TIMER-WAIT'&&ok","await new Promise(r=>setTimeout","dl('reminder')","dl('continue')"]:
               if required not in game:
                   raise SystemExit("Timer-wait behavior incomplete: "+required)
           print("Timer-wait question check passed")
