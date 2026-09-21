@@ -382,19 +382,17 @@ jobs:
               raise SystemExit("manualMarker function is missing")
           body = m.group(1)
           required = [
-              'width="5" height="8"',
+              'scale(.50)',
               'stroke-linecap="round"',
-              'x+14.8',
-              'x+22.5',
-              'x+30.2'
+              'M2 28',
+              'C30.7 7 32 8.3 32 10',
+              'M2 20 C6 18 9 20 12 25'
           ]
           missing = [s for s in required if s not in body]
           if missing:
               raise SystemExit("Manual Task hand marker is incomplete: " + ", ".join(missing))
-          if 'scale(.50)' in body:
-              raise SystemExit("Old wing-like Manual Task marker returned")
           if "manualMarker(x+4,y+6)" not in game:
-              raise SystemExit("Manual Task marker placement is not the refined one")
+              raise SystemExit("Manual Task marker placement is not the compact one")
           print("Manual Task hand marker checks passed")
           PY
 
