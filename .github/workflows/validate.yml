@@ -1,4 +1,4 @@
-name: Validate Process Panic
+name: Validate Process Challenge
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           required = [
-              "index.html", "article.html", "play/index.html", "processpanic.html",
-              "manifest.webmanifest", "sw.js", "icons/icon.svg", "icons/icon-192.png",
-              "icons/icon-512.png", "LICENSE", "README.md", "README-pt.md", "AIDisclaimer.md"
+              "docs/index.html", "docs/article.html", "docs/play/index.html", "docs/processchallenge.html",
+              "docs/manifest.webmanifest", "docs/sw.js", "docs/icons/icon.svg", "docs/icons/icon-192.png",
+              "docs/icons/icon-512.png", "LICENSE", "README.md", "README-pt.md", "AIDisclaimer.md"
           ]
           missing = [p for p in required if not Path(p).is_file()]
           if missing:
@@ -37,13 +37,13 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          for src in ["processpanic.html", "index.html", "article.html", "play/index.html"]:
+          for src in ["docs/processchallenge.html", "docs/index.html", "docs/article.html", "docs/play/index.html"]:
               text = Path(src).read_text(encoding="utf-8")
               scripts = [s for s in re.findall(r"<script[^>]*>(.*?)</script>", text, re.S | re.I) if s.strip()]
               Path("/tmp/" + src.replace("/", "_") + ".js").write_text("\n".join(scripts), encoding="utf-8")
               print(src, len(scripts), "script block(s)")
           PY
-          for f in /tmp/processpanic.html.js /tmp/index.html.js /tmp/article.html.js /tmp/play_index.html.js; do
+          for f in /tmp/docs_processchallenge.html.js /tmp/docs_index.html.js /tmp/docs_article.html.js /tmp/docs_play_index.html.js; do
             [ -s "$f" ] && node --check "$f"
           done
 
@@ -52,7 +52,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json, re
-          source = Path("processpanic.html").read_text(encoding="utf-8")
+          source = Path("docs/processchallenge.html").read_text(encoding="utf-8")
           m = re.search(
               r"const I18N=(\{.*?\});\nconst QUESTION_BANK=(\[.*?\]);\nconst LESSON_QUOTAS=(\[.*?\]);",
               source, re.S
@@ -121,7 +121,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "function buildRun()", "function activateRun()", "function shuffledArray(values)",
               "run.push(...shuffledArray(candidates).slice(0,LESSON_QUOTAS[l]))",
@@ -140,7 +140,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json,re
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
           body=re.search(r"function diagram\(kind\)\{(.*?)\n\}return wrap\(b\)\}",game,re.S)
           if not body:
@@ -159,7 +159,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "m.choiceMode==='text'?", "choiceIcon", "choiceTextVisible",
               ".choiceText{display:none}", "if(MISSIONS[S.mission]?.choiceMode==='text')"
@@ -174,7 +174,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "function conditionalMark()", "function signalMark(", "function multipleMark(",
               "function parallelMultipleMark()", "function escalationMark(", "function errorMark(",
@@ -195,7 +195,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "case'implicitParallelSplit'", "function implicitParallelIcon()",
               "case'implicitParallel':", "case'parallelNoJoin':", "end(650,65)+end(650,185)"
@@ -214,7 +214,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json,re
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
           qids={q["qid"] for q in bank}
           required={"NAME-ACTIVITY","NAME-EVENT-MESSAGE","NAME-EVENT-TIMER","NAME-DATA",
@@ -232,7 +232,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "idTag('HOME')","idTag('GLOSSARY')","idTag('REFERENCES')","idTag('ABOUT')",
               "idTag('MENU')","idTag('SETUP')","idTag('FINAL')","m.qid",
@@ -248,7 +248,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "wrongChoices=[...(old.wrongChoices||[]),S.selected]",
               "function missionErrorReview(i)", "function lessonErrorReview(l)",
@@ -264,7 +264,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               "function serviceMarker(", "function person(", "function manualMarker(",
               "function scriptMarker(", "gearPath(", "kind==='service'",
@@ -284,7 +284,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json,re
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
           q=next((x for x in bank if x["qid"]=="EV-TIMER-WAIT"),None)
           if not q or q.get("answer")!="timerIntermediate":
@@ -301,7 +301,7 @@ jobs:
           from pathlib import Path
           import json,re
           langs=["en","pt","fr","es","it"]
-          for name in ["index.html","article.html"]:
+          for name in ["docs/index.html","docs/article.html"]:
               source=Path(name).read_text(encoding="utf-8")
               m=re.search(r"const I18N=(\{.*?\});let lang=",source,re.S)
               if not m:
@@ -323,17 +323,17 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json
-          manifest=json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url")!="./processpanic.html?v=0.2-r11":
+          manifest=json.loads(Path("docs/manifest.webmanifest").read_text(encoding="utf-8"))
+          if manifest.get("start_url")!="./processchallenge.html?v=0.2-r12":
               raise SystemExit("PWA start_url must point to r10")
           if manifest.get("display")!="standalone":
               raise SystemExit("PWA display must be standalone")
           if len(manifest.get("icons",[]))<2:
               raise SystemExit("PWA needs install icons")
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           if 'const VERSION="v0.2"' not in game:
               raise SystemExit("Game version is not v0.2")
-          if '<div class="topName">Process Panic!</div><div class="topVersion">v0.2</div>' not in game:
+          if '<div class="topName">Process Challenge</div><div class="topVersion">v0.2</div>' not in game:
               raise SystemExit("Fixed title/version header contract is missing")
           print("PWA and version checks passed")
           PY
@@ -342,16 +342,16 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          sw=Path("sw.js").read_text(encoding="utf-8")
-          game=Path("processpanic.html").read_text(encoding="utf-8")
-          play=Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r11"' not in sw:
+          sw=Path("docs/sw.js").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
+          play=Path("docs/play/index.html").read_text(encoding="utf-8")
+          if 'const CACHE="processchallenge-v0.2.0-r12"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r11" not in game:
+          if "./sw.js?v=0.2-r12" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r11" not in play:
+          if "processchallenge.html?v=0.2-r12" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
@@ -360,7 +360,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("docs/processchallenge.html").read_text(encoding="utf-8")
           required=[
               'id="restartBtn"', "function restartGame()", "S.run=buildRun()",
               "['project','⌂','menu.project']", "if(id==='project'){location.href='./';return}"
@@ -376,7 +376,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
+          game = Path("docs/processchallenge.html").read_text(encoding="utf-8")
           m = re.search(r"function manualMarker\(x,y\)\{(.*?)\n\}", game, re.S)
           if not m:
               raise SystemExit("manualMarker function is missing")
@@ -396,6 +396,35 @@ jobs:
           if "manualMarker(x+4,y+6)" not in game:
               raise SystemExit("Manual Task marker placement is not the refined one")
           print("Manual Task hand marker checks passed")
+          PY
+
+      - name: Check Process Challenge branding and docs layout
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          required = [
+              "docs/index.html", "docs/article.html", "docs/processchallenge.html",
+              "docs/play/index.html", "docs/manifest.webmanifest", "docs/sw.js",
+              "docs/icons/icon.svg", "docs/icons/icon-192.png", "docs/icons/icon-512.png",
+              "docs/.nojekyll"
+          ]
+          missing=[p for p in required if not Path(p).is_file()]
+          if missing:
+              raise SystemExit("Missing docs site files: "+", ".join(missing))
+          text_files=[
+              "docs/index.html","docs/article.html","docs/processchallenge.html",
+              "docs/play/index.html","docs/manifest.webmanifest","docs/sw.js",
+              "README.md","README-pt.md",".github/workflows/pages.yml"
+          ]
+          for p in text_files:
+              s=Path(p).read_text(encoding="utf-8")
+              if "Process Panic" in s or "processpanic" in s.lower():
+                  raise SystemExit(f"Legacy product brand remains in {p}")
+          legacy=["index.html","article.html","processpanic.html","manifest.webmanifest","sw.js","play/index.html"]
+          leftovers=[p for p in legacy if Path(p).exists()]
+          if leftovers:
+              raise SystemExit("Legacy root web files remain: "+", ".join(leftovers))
+          print("Process Challenge branding and docs layout checks passed")
           PY
 
       - name: Check license attribution
