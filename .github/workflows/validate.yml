@@ -127,7 +127,7 @@ jobs:
           from pathlib import Path
           import json
           manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html":
+          if manifest.get("start_url") != "./processpanic.html?v=0.2-r5":
               raise SystemExit("PWA start_url must open the top-level game")
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA display must be standalone")
@@ -153,6 +153,69 @@ jobs:
           if good not in game:
               raise SystemExit("Mission execution collection selector check is missing")
           print("Mission execution selector check passed")
+          PY
+
+      - name: Check screen IDs, answer targets, and hidden labels
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+
+          required_ids = [
+              "idTag('HOME')", "idTag('GLOSSARY')", "idTag('REFERENCES')",
+              "idTag('ABOUT')", "idTag('MENU')", "idTag('SETUP')",
+              "idTag('FINAL')"
+          ]
+          missing_ids = [x for x in required_ids if x not in game]
+          if missing_ids:
+              raise SystemExit("Missing screen identifiers: " + ", ".join(missing_ids))
+          if "idTag('M'+String(i+1).padStart(2,'0'))" not in game:
+              raise SystemExit("Mission screen identifiers are missing")
+          if "idTag('D'+String(l+1).padStart(2,'0'))" not in game:
+              raise SystemExit("Lesson debrief identifiers are missing")
+
+          if ".choiceText{display:none}" not in game:
+              raise SystemExit("Choice labels are not hidden before answer")
+          if ".choice.revealedChoice .choiceText{display:block}" not in game:
+              raise SystemExit("Correct-choice reveal rule is missing")
+
+          m = re.search(r"const MISSIONS=(\[.*?\]);", game, re.S)
+          if not m:
+              raise SystemExit("Could not read MISSIONS")
+          missions = json.loads(m.group(1))
+          d = re.search(r"function diagram\(kind\)\{(.*?)\n\}return wrap\(b\)\}", game, re.S)
+          if not d:
+              raise SystemExit("Could not read diagram switch")
+          body = d.group(1)
+          target_helpers = ("slot(", "flowSlot(", "laneSlot(", "poolSlot(")
+          missing = []
+          for mission in missions:
+              kind = mission["diagram"]
+              cm = re.search(r"case'"+re.escape(kind)+r"':(.*?)(?=\ncase'|$)", body, re.S)
+              if not cm or not any(helper in cm.group(1) for helper in target_helpers):
+                  missing.append(kind)
+          if missing:
+              raise SystemExit("Missions without explicit answer target: " + ", ".join(missing))
+          print("Screen IDs, target coverage, and hidden-label checks passed")
+          PY
+
+      - name: Check service worker freshness strategy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          sw = Path("sw.js").read_text(encoding="utf-8")
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          play = Path("play/index.html").read_text(encoding="utf-8")
+          if 'const CACHE="processpanic-v0.2.0-r5"' not in sw:
+              raise SystemExit("Unexpected service-worker cache version")
+          if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
+              raise SystemExit("HTML is not network-first")
+          if "./sw.js?v=0.2-r5" not in game:
+              raise SystemExit("Game does not force current service-worker script")
+          if "processpanic.html?v=0.2-r5" not in play:
+              raise SystemExit("Play entry point is not cache-busted")
+          print("Service-worker freshness checks passed")
           PY
 
       - name: Check license attribution
