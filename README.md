@@ -68,7 +68,6 @@ The game does not embed Quick Guide image assets. Color is used for game state a
 - `docs/article.html` — educational design article
 - `docs/play/` — stable play entry point
 - `docs/icons/` — PWA icons
-- `.github/workflows/pages.yml` — publishes only `docs/`
 - `.github/workflows/validate.yml` — validates the game and published site
 - `AIDisclaimer.md` — disclosure of AI-assisted development
 - `LICENSE` — MIT License
