@@ -8,7 +8,7 @@ Version: **v0.2**
 
 ## GitHub Pages
 
-The complete public site lives in **`docs/`**:
+GitHub Pages is configured to publish directly from **`main:/docs`**. The complete public site lives in **`docs/`**:
 
 - [Project home](docs/index.html)
 - [Play](docs/play/index.html)
@@ -68,7 +68,7 @@ The game does not embed Quick Guide image assets. Color is used for game state a
 - `docs/article.html` — educational design article
 - `docs/play/` — stable play entry point
 - `docs/icons/` — PWA icons
-- `.github/workflows/validate.yml` — validates the game and published site
+- `.github/workflows/validate.yml` — optional manual validation of the game and published site (not required for deployment)
 - `AIDisclaimer.md` — disclosure of AI-assisted development
 - `LICENSE` — MIT License
 
