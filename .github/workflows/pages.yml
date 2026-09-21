@@ -1,4 +1,4 @@
-name: Deploy Process Panic! to GitHub Pages
+name: Deploy Process Challenge to GitHub Pages
 
 on:
   push:
@@ -27,10 +27,10 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload site
+      - name: Upload docs site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "./docs"
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
