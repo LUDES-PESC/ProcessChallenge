@@ -187,7 +187,7 @@ function restartGame(){
 }
 function reset(){restartGame()}
 let installPrompt=null;window.addEventListener('beforeinstallprompt',x=>{x.preventDefault();installPrompt=x});window.addEventListener('appinstalled',()=>notify(t('toast.installed')));async function install(){if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null}else notify(t('install.unavailable'))}
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js?v=0.2-r5',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js?v=0.2-r6',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 applyPrefs();menu();showHome();
 
 </script>
