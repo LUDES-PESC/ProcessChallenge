@@ -6,7 +6,7 @@ Versão: **v0.2**
 
 ## GitHub Pages
 
-Todo o site público fica em **`docs/`**:
+O GitHub Pages está configurado para publicar diretamente de **`main:/docs`**. Todo o site público fica em **`docs/`**:
 
 - [Página inicial](docs/index.html)
 - [Jogar](docs/play/index.html)
@@ -48,7 +48,7 @@ A simbologia BPMN é redesenhada em SVG nativo, usando o BPMN Quick Guide como r
 - `docs/article.html` — artigo
 - `docs/play/` — entrada estável para o jogo
 - `docs/icons/` — ícones da PWA
-- `.github/workflows/validate.yml` — valida jogo e site
+- `.github/workflows/validate.yml` — validação manual opcional do jogo e do site (não é necessária para o deploy)
 - `AIDisclaimer.md` — declaração de uso de IA
 - `LICENSE` — licença MIT
 
