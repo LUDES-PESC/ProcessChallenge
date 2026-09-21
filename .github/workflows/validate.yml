@@ -146,9 +146,11 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           game = Path("processpanic.html").read_text(encoding="utf-8")
-          if "$('.choice').forEach" in game:
-              raise SystemExit("Invalid selector: use $ for collections before forEach")
-          if "$('.choice').forEach" not in game:
+          good = "document.querySelectorAll('.choice').forEach"
+          bad = "document.querySelector('.choice').forEach"
+          if bad in game:
+              raise SystemExit("Invalid single-element selector before forEach")
+          if good not in game:
               raise SystemExit("Mission execution collection selector check is missing")
           print("Mission execution selector check passed")
           PY
