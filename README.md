@@ -6,6 +6,45 @@
 
 Version: **v0.2**
 
+## Access the project
+
+Once GitHub Pages is enabled for this repository, the public project will be available at:
+
+- **Project home:** https://ludes-pesc.github.io/ProcessPanic/
+- **Play Process Panic!:** https://ludes-pesc.github.io/ProcessPanic/play/
+- **Direct game URL:** https://ludes-pesc.github.io/ProcessPanic/processpanic.html
+- **Article — educational design:** https://ludes-pesc.github.io/ProcessPanic/article.html
+
+### GitHub Pages activation
+
+The repository already contains the GitHub Pages deployment workflow, but GitHub requires Pages to be enabled once by a repository administrator.
+
+1. Open: https://github.com/LUDES-PESC/ProcessPanic/settings/pages
+2. Under **Build and deployment**, select **Source: GitHub Actions**.
+3. Re-run the Pages workflow or push a new commit.
+
+Useful workflow links:
+
+- **Deploy Process Panic! to GitHub Pages:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/pages.yml
+- **Validate Process Panic:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/validate.yml
+
+If the public URLs above return 404, check the Pages setting and the deployment workflow first.
+
+## Repository links
+
+- **Repository:** https://github.com/LUDES-PESC/ProcessPanic
+- **Game source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/processpanic.html
+- **Landing page source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/index.html
+- **Article source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/article.html
+- **English README:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/README.md
+- **README em português:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/README-pt.md
+- **AI Use Disclaimer:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/AIDisclaimer.md
+- **MIT License:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/LICENSE
+- **PWA manifest:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/manifest.webmanifest
+- **Service worker:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/sw.js
+
+## Course sequence
+
 The game follows the teaching sequence used in the supporting course materials:
 
 1. **Introduction: flow and tokens**
@@ -40,8 +79,8 @@ The interface, mission statements, answer options, feedback, debriefs, glossary,
 
 The BPMN shapes are redrawn as native SVG. The **BPMN Quick Guide, Second Edition, by Denis Gagné and Simon Ringuette** is used as the visual reference for the symbol set, while **OMG BPMN 2.0.2** is treated as the normative specification for notation and semantics.
 
-- BPMN Quick Guide: https://www.bpmnquickguide.com/view-bpmn-quick-guide/
-- OMG BPMN 2.0.2: https://www.omg.org/spec/BPMN/2.0.2
+- **BPMN Quick Guide:** https://www.bpmnquickguide.com/view-bpmn-quick-guide/
+- **OMG BPMN 2.0.2:** https://www.omg.org/spec/BPMN/2.0.2
 
 The game does not embed Quick Guide image assets. Color is reserved for game state and token animation rather than presented as normative BPMN meaning.
 
@@ -61,7 +100,23 @@ The game does not embed Quick Guide image assets. Color is reserved for game sta
 
 ## Running locally
 
-The game itself can be opened directly as `processpanic.html`. PWA installation and the service worker require an HTTP/HTTPS origin, so for full offline/install behavior serve the repository with a small local web server or use GitHub Pages.
+The game itself is self-contained and can be opened directly as `processpanic.html`.
+
+For full PWA installation and service-worker behavior, serve the repository over HTTP/HTTPS. For example:
+
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/
+```
+
+## Installing on a phone
+
+When opened from GitHub Pages in a compatible browser, Process Panic! can be installed as a web app. Use the browser's **Install app** or **Add to Home Screen** command. The game includes a manifest, install icons, and an offline service worker.
 
 ## License
 
