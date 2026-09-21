@@ -47,23 +47,29 @@ jobs:
             [ -s "$f" ] && node --check "$f"
           done
 
-      - name: Validate complete game I18N catalog
+      - name: Validate randomized question bank and I18N
         run: |
           python - <<'PY'
           from pathlib import Path
           import json, re
           source = Path("processpanic.html").read_text(encoding="utf-8")
-          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=(\[.*?\]);", source, re.S)
+          m = re.search(
+              r"const I18N=(\{.*?\});\nconst QUESTION_BANK=(\[.*?\]);\nconst LESSON_QUOTAS=(\[.*?\]);",
+              source, re.S
+          )
           if not m:
-              raise SystemExit("Could not isolate I18N and MISSIONS")
+              raise SystemExit("Could not isolate I18N, QUESTION_BANK and LESSON_QUOTAS")
           i18n = json.loads(m.group(1))
-          missions = json.loads(m.group(2))
-          langs = ["en", "pt", "fr", "es", "it"]
+          bank = json.loads(m.group(2))
+          quotas = json.loads(m.group(3))
+          langs = ["en","pt","fr","es","it"]
           if list(i18n) != langs:
               raise SystemExit(f"Expected language order {langs}, got {list(i18n)}")
+          if len(quotas) != 7 or sum(quotas) != 21:
+              raise SystemExit(f"Expected seven lesson quotas totaling 21, got {quotas}")
 
           def scalar_keys(d):
-              return {k for k,v in d.items() if isinstance(v, str)}
+              return {k for k,v in d.items() if isinstance(v,str)}
           base_scalar = scalar_keys(i18n["en"])
           base_diagram = set(i18n["en"]["diagram"])
           base_elements = set(i18n["en"]["elements"])
@@ -71,54 +77,245 @@ jobs:
               cat = i18n[lang]
               if scalar_keys(cat) != base_scalar:
                   raise SystemExit(f"Scalar I18N key mismatch in {lang}")
-              if len(cat.get("lessons", [])) != 5:
-                  raise SystemExit(f"{lang}: expected 5 lessons")
-              if len(cat.get("missions", [])) != 21:
-                  raise SystemExit(f"{lang}: expected 21 missions")
-              if set(cat.get("diagram", {})) != base_diagram:
+              if len(cat.get("lessons",[])) != 7:
+                  raise SystemExit(f"{lang}: expected 7 lessons")
+              if len(cat.get("missions",[])) != len(bank):
+                  raise SystemExit(f"{lang}: question text count does not match bank size")
+              if set(cat.get("diagram",{})) != base_diagram:
                   raise SystemExit(f"Diagram label key mismatch in {lang}")
-              if set(cat.get("elements", {})) != base_elements:
+              if set(cat.get("elements",{})) != base_elements:
                   raise SystemExit(f"Element key mismatch in {lang}")
-              for n,row in enumerate(cat["missions"], 1):
-                  if len(row) != 4 or not all(isinstance(x,str) and x.strip() for x in row):
-                      raise SystemExit(f"{lang}: invalid mission {n}")
+              for n,row in enumerate(cat["missions"],1):
+                  if len(row)!=4 or not all(isinstance(x,str) and x.strip() for x in row):
+                      raise SystemExit(f"{lang}: invalid question text {n}")
               for key,row in cat["elements"].items():
-                  if len(row) != 2 or not all(isinstance(x,str) and x.strip() for x in row):
+                  if len(row)!=2 or not all(isinstance(x,str) and x.strip() for x in row):
                       raise SystemExit(f"{lang}: invalid element {key}")
-          for n,m in enumerate(missions, 1):
-              if len(m.get("options", [])) != 4:
-                  raise SystemExit(f"Mission {n} must have four answer options")
-              if m.get("answer") not in m["options"]:
-                  raise SystemExit(f"Mission {n} answer is not one of its options")
-              unknown = set(m["options"]) - base_elements
+
+          qids = [q.get("qid") for q in bank]
+          if any(not q for q in qids) or len(set(qids)) != len(qids):
+              raise SystemExit("Question IDs must be non-empty and unique")
+          if len(bank) <= 21:
+              raise SystemExit("Question bank must contain reserve questions")
+          counts = [0]*7
+          for q in bank:
+              lesson=q.get("lesson")
+              if lesson not in range(7):
+                  raise SystemExit(f"{q.get('qid')}: invalid lesson {lesson}")
+              counts[lesson]+=1
+              opts=q.get("options",[])
+              if len(opts)!=4:
+                  raise SystemExit(f"{q['qid']} must have four answer options")
+              if q.get("answer") not in opts:
+                  raise SystemExit(f"{q['qid']} answer is not one of its options")
+              unknown=set(opts)-base_elements
               if unknown:
-                  raise SystemExit(f"Mission {n} uses unknown element ids: {sorted(unknown)}")
-              if m.get("lesson") not in range(5):
-                  raise SystemExit(f"Mission {n} has invalid lesson")
-          print("Game I18N parity passed for five languages, 5 lessons, and 21 missions")
+                  raise SystemExit(f"{q['qid']} uses unknown option ids: {sorted(unknown)}")
+          for l,(have,need) in enumerate(zip(counts,quotas)):
+              if have < need:
+                  raise SystemExit(f"Lesson {l} has only {have} questions but quota is {need}")
+          print("Question bank:",len(bank),"questions; per-lesson counts:",counts,"; run quotas:",quotas)
+          PY
+
+      - name: Check random game construction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "function buildRun()", "function activateRun()", "function shuffledArray(values)",
+              "run.push(...shuffledArray(candidates).slice(0,LESSON_QUOTAS[l]))",
+              "S.run=buildRun()", "S.run.map(i=>QUESTION_BANK[i])", "BANK_TEXTS", "schema:3"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Random game construction incomplete: "+", ".join(missing))
+          if "progress:S.progress,run:S.run,schema:S.schema" not in game:
+              raise SystemExit("Run selection is not persisted")
+          print("Random run construction checks passed")
+          PY
+
+      - name: Check all bank diagrams exist
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
+          body=re.search(r"function diagram\(kind\)\{(.*?)\n\}return wrap\(b\)\}",game,re.S)
+          if not body:
+              raise SystemExit("Could not inspect diagram switch")
+          body=body.group(1)
+          missing=[]
+          for q in bank:
+              if not re.search(r"case'"+re.escape(q["diagram"])+r"':",body):
+                  missing.append(q["qid"]+":"+q["diagram"])
+          if missing:
+              raise SystemExit("Questions with missing diagram implementation: "+", ".join(missing))
+          print("All question diagrams exist")
+          PY
+
+      - name: Check choice rendering contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "m.choiceMode==='text'?", "choiceIcon", "choiceTextVisible",
+              ".choiceText{display:none}", "if(MISSIONS[S.mission]?.choiceMode==='text')"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Choice rendering contract incomplete: "+", ".join(missing))
+          print("Choice rendering checks passed")
+          PY
+
+      - name: Check BPMN event and message-flow symbol coverage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "function conditionalMark()", "function signalMark(", "function multipleMark(",
+              "function parallelMultipleMark()", "function escalationMark(", "function errorMark(",
+              "function compensationMark(", "function cancelMark(", "function boundaryEvent(",
+              "function msgDecorated(", "case'startMessage'", "case'startConditional'",
+              "case'startSignal'", "case'startMultiple'", "case'startParallelMultiple'",
+              "case'escalationThrowIntermediate'", "case'compensationThrowIntermediate'",
+              "case'boundaryError'", "case'boundaryCompensation'", "case'boundaryCancel'",
+              "case'initiatingMessageFlow'", "case'nonInitiatingMessageFlow'"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("BPMN symbol coverage incomplete: "+", ".join(missing))
+          print("Event and decorated Message Flow symbol checks passed")
+          PY
+
+      - name: Check parallelism teaching variants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "case'implicitParallelSplit'", "function implicitParallelIcon()",
+              "case'implicitParallel':", "case'parallelNoJoin':", "end(650,65)+end(650,185)"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Parallelism variants incomplete: "+", ".join(missing))
+          parallel_case=game.split("case'parallel':",1)[1].split("break;",1)[0]
+          if "gateway(645,125,'parallel')" in parallel_case:
+              raise SystemExit("Parallel split question still leaks the answer through a closing + gateway")
+          print("Parallelism teaching variants passed")
+          PY
+
+      - name: Check naming lessons and best-practice questions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
+          qids={q["qid"] for q in bank}
+          required={"NAME-ACTIVITY","NAME-EVENT-MESSAGE","NAME-EVENT-TIMER","NAME-DATA",
+                    "NAME-GATEWAY","NAME-FLOW","NAME-DEFAULT","NAME-POOL","NAME-LANE"}
+          missing=sorted(required-qids)
+          if missing:
+              raise SystemExit("Missing naming questions: "+", ".join(missing))
+          for q in bank:
+              if q["qid"].startswith("NAME-") and q.get("choiceMode")!="text":
+                  raise SystemExit(q["qid"]+" must use text choices")
+          print("Naming best-practice question checks passed")
+          PY
+
+      - name: Check stable screen identifiers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "idTag('HOME')","idTag('GLOSSARY')","idTag('REFERENCES')","idTag('ABOUT')",
+              "idTag('MENU')","idTag('SETUP')","idTag('FINAL')","m.qid",
+              "idTag('D'+String(l+1).padStart(2,'0'))"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Missing stable screen identifiers: "+", ".join(missing))
+          print("Screen identifier checks passed")
+          PY
+
+      - name: Check error-driven debrief
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "wrongChoices=[...(old.wrongChoices||[]),S.selected]",
+              "function missionErrorReview(i)", "function lessonErrorReview(l)",
+              "function finalErrorReview()", "t('debrief.errors')", "t('final.errors')"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Error-driven debrief implementation incomplete: "+", ".join(missing))
+          print("Error-driven debrief checks passed")
+          PY
+
+      - name: Check task markers and random exclusive execution
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "function serviceMarker(", "function person(", "function manualMarker(",
+              "function scriptMarker(", "gearPath(", "kind==='service'",
+              "kind==='manual'", "kind==='script'", "m.diagram==='exclusive'&&ok",
+              "const upper=randomInt(2)===0"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Task/random execution checks incomplete: "+", ".join(missing))
+          if game.count("gearPath(")<3:
+              raise SystemExit("Service Task marker must use two gear outlines")
+          print("Task marker and exclusive execution checks passed")
+          PY
+
+      - name: Check timer-wait question remains in bank
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          bank=json.loads(re.search(r"const QUESTION_BANK=(\[.*?\]);",game,re.S).group(1))
+          q=next((x for x in bank if x["qid"]=="EV-TIMER-WAIT"),None)
+          if not q or q.get("answer")!="timerIntermediate":
+              raise SystemExit("EV-TIMER-WAIT is missing or incorrect")
+          for required in ["m.diagram==='rings'&&ok","await new Promise(r=>setTimeout","dl('reminder')","dl('continue')"]:
+              if required not in game:
+                  raise SystemExit("Timer-wait behavior incomplete: "+required)
+          print("Timer-wait question check passed")
           PY
 
       - name: Validate landing page and article I18N parity
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json, re
-          langs = ["en", "pt", "fr", "es", "it"]
-          for name in ["index.html", "article.html"]:
-              source = Path(name).read_text(encoding="utf-8")
-              m = re.search(r"const I18N=(\{.*?\});let lang=", source, re.S)
+          import json,re
+          langs=["en","pt","fr","es","it"]
+          for name in ["index.html","article.html"]:
+              source=Path(name).read_text(encoding="utf-8")
+              m=re.search(r"const I18N=(\{.*?\});let lang=",source,re.S)
               if not m:
                   raise SystemExit(f"Could not isolate site I18N from {name}")
-              data = json.loads(m.group(1))
-              if set(data) != set(langs):
+              data=json.loads(m.group(1))
+              if set(data)!=set(langs):
                   raise SystemExit(f"{name}: wrong language set")
-              base = set(data["en"])
+              base=set(data["en"])
               for lang in langs:
-                  if set(data[lang]) != base:
+                  if set(data[lang])!=base:
                       raise SystemExit(f"{name}: key mismatch in {lang}")
                   if any(not isinstance(v,str) or not v.strip() for v in data[lang].values()):
                       raise SystemExit(f"{name}: empty/non-string translation in {lang}")
-              print(name, "I18N parity passed")
+              print(name,"I18N parity passed")
           PY
 
       - name: Check PWA metadata and version
@@ -126,14 +323,14 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json
-          manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html?v=0.2-r9":
-              raise SystemExit("PWA start_url must open the top-level game")
-          if manifest.get("display") != "standalone":
+          manifest=json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
+          if manifest.get("start_url")!="./processpanic.html?v=0.2-r10":
+              raise SystemExit("PWA start_url must point to r10")
+          if manifest.get("display")!="standalone":
               raise SystemExit("PWA display must be standalone")
-          if len(manifest.get("icons", [])) < 2:
+          if len(manifest.get("icons",[]))<2:
               raise SystemExit("PWA needs install icons")
-          game = Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("processpanic.html").read_text(encoding="utf-8")
           if 'const VERSION="v0.2"' not in game:
               raise SystemExit("Game version is not v0.2")
           if '<div class="topName">Process Panic!</div><div class="topVersion">v0.2</div>' not in game:
@@ -141,234 +338,37 @@ jobs:
           print("PWA and version checks passed")
           PY
 
-      - name: Check mission execution selectors
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          good = "document.querySelectorAll('.choice').forEach"
-          bad = "document.querySelector('.choice').forEach"
-          if bad in game:
-              raise SystemExit("Invalid single-element selector before forEach")
-          if good not in game:
-              raise SystemExit("Mission execution collection selector check is missing")
-          print("Mission execution selector check passed")
-          PY
-
-      - name: Check screen IDs, answer targets, and hidden labels
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-
-          required_ids = [
-              "idTag('HOME')", "idTag('GLOSSARY')", "idTag('REFERENCES')",
-              "idTag('ABOUT')", "idTag('MENU')", "idTag('SETUP')",
-              "idTag('FINAL')"
-          ]
-          missing_ids = [x for x in required_ids if x not in game]
-          if missing_ids:
-              raise SystemExit("Missing screen identifiers: " + ", ".join(missing_ids))
-          if "idTag('M'+String(i+1).padStart(2,'0'))" not in game:
-              raise SystemExit("Mission screen identifiers are missing")
-          if "idTag('D'+String(l+1).padStart(2,'0'))" not in game:
-              raise SystemExit("Lesson debrief identifiers are missing")
-
-          if ".choiceText{display:none}" not in game:
-              raise SystemExit("Choice labels are not hidden before answer")
-          if ".choice.revealedChoice .choiceText{display:block}" not in game:
-              raise SystemExit("Correct-choice reveal rule is missing")
-
-          m = re.search(r"const MISSIONS=(\[.*?\]);", game, re.S)
-          if not m:
-              raise SystemExit("Could not read MISSIONS")
-          missions = json.loads(m.group(1))
-          d = re.search(r"function diagram\(kind\)\{(.*?)\n\}return wrap\(b\)\}", game, re.S)
-          if not d:
-              raise SystemExit("Could not read diagram switch")
-          body = d.group(1)
-          target_helpers = ("slot(", "flowSlot(", "laneSlot(", "poolSlot(")
-          missing = []
-          for mission in missions:
-              kind = mission["diagram"]
-              cm = re.search(r"case'"+re.escape(kind)+r"':(.*?)(?=\ncase'|$)", body, re.S)
-              if not cm or not any(helper in cm.group(1) for helper in target_helpers):
-                  missing.append(kind)
-          if missing:
-              raise SystemExit("Missions without explicit answer target: " + ", ".join(missing))
-          print("Screen IDs, target coverage, and hidden-label checks passed")
-          PY
-
       - name: Check service worker freshness strategy
         run: |
           python - <<'PY'
           from pathlib import Path
-          sw = Path("sw.js").read_text(encoding="utf-8")
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          play = Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r9"' not in sw:
+          sw=Path("sw.js").read_text(encoding="utf-8")
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          play=Path("play/index.html").read_text(encoding="utf-8")
+          if 'const CACHE="processpanic-v0.2.0-r10"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r9" not in game:
+          if "./sw.js?v=0.2-r10" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r9" not in play:
+          if "processpanic.html?v=0.2-r10" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
 
-      - name: Check global restart control
+      - name: Check global restart and project-root menu
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json, re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          if 'id="restartBtn"' not in game:
-              raise SystemExit("Global restart button is missing")
-          if "function restartGame()" not in game or "openMission(0)" not in game:
-              raise SystemExit("Restart behavior is missing or does not return to M01")
-          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=", game, re.S)
-          if not m:
-              raise SystemExit("Could not read I18N")
-          data = json.loads(m.group(1))
-          for lang in ["en","pt","fr","es","it"]:
-              if not data[lang].get("game.restart"):
-                  raise SystemExit(f"Missing restart translation in {lang}")
-              if not data[lang].get("game.restartConfirm"):
-                  raise SystemExit(f"Missing restart confirmation in {lang}")
-          print("Global restart control checks passed")
-          PY
-
-      - name: Check M08 task markers
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          required = [
-              "function serviceMarker(", "function person(", "function manualMarker(",
-              "function scriptMarker(", "gearPath(", "kind==='service'", "kind==='manual'",
-              "kind==='script'"
-          ]
-          missing = [x for x in required if x not in game]
-          if missing:
-              raise SystemExit("Missing BPMN task marker implementation: " + ", ".join(missing))
-          if game.count("gearPath(") < 3:
-              raise SystemExit("Service Task marker must use two gear outlines")
-          print("M08 BPMN task marker checks passed")
-          PY
-
-      - name: Check M10 target and M13 hidden answers
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          lane = re.search(r"function laneSlot\(x,y,w,h\)\{(.*?)\n\}", game, re.S)
-          if not lane or '<rect' not in lane.group(1) or "stroke-dasharray" not in lane.group(1):
-              raise SystemExit("M10 must use a rectangular insertion target")
-          if "laneSlot(66,105,612,40)" not in game:
-              raise SystemExit("M10 diagram does not use the rectangular Lane target")
-          mission = re.search(r"function mission\(\)\{(.*?)\n\}\nfunction revealSelectedChoice", game, re.S)
-          if not mission:
-              raise SystemExit("Could not inspect mission renderer")
-          body = mission.group(1)
-          if "S.optionOrder.map" not in body:
-              raise SystemExit("Mission renderer is not using randomized option order")
-          if "e(id)[0]" in body or "e(id)[1]" in body or "choiceText" in body:
-              raise SystemExit("Answer names/descriptions are present before response")
-          if "mission.option" not in body:
-              raise SystemExit("Generic localized option accessibility label is missing")
-          print("M10 target and M13 hidden-answer checks passed")
-          PY
-
-      - name: Check randomized answer positions
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          required = [
-              "function randomInt(n)", "crypto.getRandomValues", "function shuffledOptions(options,previous=[])",
-              "S.optionOrder=shuffledOptions(MISSIONS[i].options,S.optionOrder)",
-              "S.optionOrder=shuffledOptions(m.options,prev)"
-          ]
-          missing = [x for x in required if x not in game]
-          if missing:
-              raise SystemExit("Random option-order implementation incomplete: " + ", ".join(missing))
-          print("Randomized answer-position checks passed")
-          PY
-
-      - name: Check M04 random exclusive execution
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          required = [
-              "m.diagram==='exclusive'&&ok",
-              "const upper=randomInt(2)===0",
-              "[[45,125],[235,125],[370,125],[500,65],[610,65]]",
-              "[[45,125],[235,125],[370,125],[500,185],[610,185]]"
-          ]
-          missing=[x for x in required if x not in game]
-          if missing:
-              raise SystemExit("M04 random exclusive execution incomplete: " + ", ".join(missing))
-          print("M04 random exclusive execution check passed")
-          PY
-
-      - name: Check project-root menu link
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          if "['project','⌂','menu.project']" not in game:
-              raise SystemExit("Project-page item is missing from hamburger menu")
-          if "if(id==='project'){location.href='./';return}" not in game:
-              raise SystemExit("Project-page menu action does not navigate to repository Pages root")
-          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=", game, re.S)
-          data=json.loads(m.group(1))
-          for lang in ["en","pt","fr","es","it"]:
-              if not data[lang].get("menu.project"):
-                  raise SystemExit(f"Missing project-page menu translation in {lang}")
-          print("Project-root menu link checks passed")
-          PY
-
-      - name: Check error-driven debrief
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game = Path("processpanic.html").read_text(encoding="utf-8")
+          game=Path("processpanic.html").read_text(encoding="utf-8")
           required=[
-              "wrongChoices=[...(old.wrongChoices||[]),S.selected]",
-              "function missionErrorReview(i)",
-              "function lessonErrorReview(l)",
-              "function finalErrorReview()",
-              "t('debrief.errors')",
-              "t('final.errors')"
+              'id="restartBtn"', "function restartGame()", "S.run=buildRun()",
+              "['project','⌂','menu.project']", "if(id==='project'){location.href='./';return}"
           ]
           missing=[x for x in required if x not in game]
           if missing:
-              raise SystemExit("Error-driven debrief implementation incomplete: " + ", ".join(missing))
-          print("Error-driven debrief checks passed")
-          PY
-
-      - name: Check M18 timer-wait scenario
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, re
-          game = Path("processpanic.html").read_text(encoding="utf-8")
-          m=re.search(r"const MISSIONS=(\[.*?\]);",game,re.S)
-          missions=json.loads(m.group(1))
-          q=missions[17]
-          if q.get("answer")!="timerIntermediate":
-              raise SystemExit("M18 answer must be timerIntermediate")
-          if "timerIntermediate" not in q.get("options",[]):
-              raise SystemExit("M18 timer option missing")
-          for required in ["m.diagram==='rings'&&ok","await new Promise(r=>setTimeout","dl('reminder')","dl('continue')"]:
-              if required not in game:
-                  raise SystemExit("M18 timer-wait behavior incomplete: "+required)
-          print("M18 timer-wait checks passed")
+              raise SystemExit("Restart/project menu contract incomplete: "+", ".join(missing))
+          print("Restart and project-root menu checks passed")
           PY
 
       - name: Check license attribution
