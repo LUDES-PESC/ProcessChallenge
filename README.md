@@ -1,43 +1,24 @@
-# Process Panic! — BPMN Rescue
+# Process Challenge — BPMN Rescue
 
 [Português](README-pt.md)
 
-**Process Panic!** is a mobile-first educational game for learning BPMN by reading, executing, debugging, and repairing process models.
+**Process Challenge** is a mobile-first educational game for learning BPMN by reading, executing, debugging, and repairing process models.
 
 Version: **v0.2**
 
-## Access the project
+## GitHub Pages
 
-The GitHub Pages site is **live**:
+The complete public site lives in **`docs/`**:
 
-- **Project home:** https://ludes-pesc.github.io/ProcessPanic/
-- **Play Process Panic!:** https://ludes-pesc.github.io/ProcessPanic/play/
-- **Direct game URL:** https://ludes-pesc.github.io/ProcessPanic/processpanic.html
-- **Article — educational design:** https://ludes-pesc.github.io/ProcessPanic/article.html
-- **PWA manifest:** https://ludes-pesc.github.io/ProcessPanic/manifest.webmanifest
-- **Service worker:** https://ludes-pesc.github.io/ProcessPanic/sw.js
+- [Project home](docs/index.html)
+- [Play](docs/play/index.html)
+- [Direct game](docs/processchallenge.html)
+- [Educational design article](docs/article.html)
+- [PWA manifest](docs/manifest.webmanifest)
 
-GitHub Actions:
-
-- **Deploy Process Panic! to GitHub Pages:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/pages.yml
-- **Validate Process Panic:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/validate.yml
-
-## Repository links
-
-- **Repository:** https://github.com/LUDES-PESC/ProcessPanic
-- **Game source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/processpanic.html
-- **Landing page source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/index.html
-- **Article source:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/article.html
-- **English README:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/README.md
-- **README em português:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/README-pt.md
-- **AI Use Disclaimer:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/AIDisclaimer.md
-- **MIT License:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/LICENSE
-- **PWA manifest:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/manifest.webmanifest
-- **Service worker:** https://github.com/LUDES-PESC/ProcessPanic/blob/main/sw.js
+All links inside the published site are relative, so changing the repository name later does not require rewriting the site structure.
 
 ## Course sequence
-
-The game follows the teaching sequence used in the supporting course materials:
 
 1. **Introduction: flow and tokens**
 2. **Flows, Data and Activities**
@@ -47,9 +28,9 @@ The game follows the teaching sequence used in the supporting course materials:
 6. **Naming activities and events**
 7. **Naming gateways and collaboration**
 
-A playthrough always contains **21 missions**, sampled from a larger question bank. Questions are randomly selected and randomly ordered **inside each lesson**, while lesson order remains pedagogical. The Events lesson has a larger quota because it covers many Start, Intermediate, Boundary and End Event variants.
+A playthrough always contains **21 missions**, sampled from a larger question bank. Questions are randomly selected and randomly ordered inside each lesson, while lesson order remains pedagogical.
 
-Every lesson ends with an **error-driven lesson debrief**. The final debrief also summarizes recurring confusion patterns.
+Every lesson ends with an **error-driven debrief**. The final debrief summarizes recurring confusion patterns.
 
 ## Educational design
 
@@ -57,11 +38,11 @@ The central loop is:
 
 > **choose → execute → observe → debrief**
 
-BPMN is treated as executable semantics rather than a vocabulary list. Tokens make routing, parallelism, synchronization, waiting, termination, participants, and message exchange visible. Wrong choices are allowed to produce observable process behavior before the explanation is shown.
+BPMN is treated as executable semantics rather than a vocabulary list. Tokens make routing, parallelism, synchronization, waiting, termination, participants, and message exchange visible.
 
 ## Internationalization
 
-The game uses one explicit I18N catalogue with five complete language variants:
+The interface, questions, feedback, debriefs and labels inside BPMN diagrams are available in:
 
 - English
 - Português
@@ -69,51 +50,38 @@ The game uses one explicit I18N catalogue with five complete language variants:
 - Español
 - Italiano
 
-The interface, mission statements, answer options, feedback, debriefs, glossary, setup labels, and every label drawn inside BPMN SVG diagrams come from the active language catalogue. Language changes apply immediately without restarting the mission. The language preference is shared by the landing page, article, and game.
-
 ## BPMN notation
 
-The BPMN shapes are redrawn as native SVG. The **BPMN Quick Guide, Second Edition, by Denis Gagné and Simon Ringuette** is used as the visual reference for the symbol set, while **OMG BPMN 2.0.2** is treated as the normative specification for notation and semantics.
+The BPMN shapes are redrawn as native SVG.
 
-- **BPMN Quick Guide:** https://www.bpmnquickguide.com/view-bpmn-quick-guide/
-- **OMG BPMN 2.0.2:** https://www.omg.org/spec/BPMN/2.0.2
-- **BPMN Naming Conventions Best Practices:** https://www.bpmnquickguide.com/quickguide/bpmn-quick-guide/bpmn-naming-conventions-best-practices
+- **Visual reference:** BPMN Quick Guide, Second Edition, Denis Gagné and Simon Ringuette
+- **Normative reference:** OMG BPMN 2.0.2
+- **Naming practices:** BPMN Naming Conventions Best Practices
 
-The game does not embed Quick Guide image assets. Color is reserved for game state and token animation rather than presented as normative BPMN meaning.
+The game does not embed Quick Guide image assets. Color is used for game state and token animation rather than as normative BPMN semantics.
 
 ## Repository structure
 
-- `index.html` — multilingual project landing page
-- `article.html` — multilingual short article about the educational design
-- `play/index.html` — stable entry point that opens the game
-- `processpanic.html` — self-contained playable HTML5 game
-- `manifest.webmanifest` — PWA metadata
-- `sw.js` — offline service worker
-- `icons/` — install icons
-- `.github/workflows/pages.yml` — GitHub Pages deployment
-- `.github/workflows/validate.yml` — JavaScript, I18N, structure, and PWA validation
+- `docs/` — complete GitHub Pages site and PWA
+- `docs/processchallenge.html` — playable game
+- `docs/index.html` — project landing page
+- `docs/article.html` — educational design article
+- `docs/play/` — stable play entry point
+- `docs/icons/` — PWA icons
+- `.github/workflows/pages.yml` — publishes only `docs/`
+- `.github/workflows/validate.yml` — validates the game and published site
 - `AIDisclaimer.md` — disclosure of AI-assisted development
 - `LICENSE` — MIT License
 
 ## Running locally
 
-The game itself is self-contained and can be opened directly as `processpanic.html`.
-
-For full PWA installation and service-worker behavior, serve the repository over HTTP/HTTPS. For example:
+For complete PWA behavior, serve the repository and open `/docs/`:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then open:
-
-```text
-http://localhost:8000/
-```
-
-## Installing on a phone
-
-When opened from GitHub Pages in a compatible browser, Process Panic! can be installed as a web app. Use the browser's **Install app** or **Add to Home Screen** command. The game includes a manifest, install icons, and an offline service worker.
+Then open `http://localhost:8000/docs/`.
 
 ## License
 
