@@ -324,7 +324,7 @@ jobs:
           from pathlib import Path
           import json
           manifest=json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url")!="./processpanic.html?v=0.2-r10":
+          if manifest.get("start_url")!="./processpanic.html?v=0.2-r11":
               raise SystemExit("PWA start_url must point to r10")
           if manifest.get("display")!="standalone":
               raise SystemExit("PWA display must be standalone")
@@ -345,13 +345,13 @@ jobs:
           sw=Path("sw.js").read_text(encoding="utf-8")
           game=Path("processpanic.html").read_text(encoding="utf-8")
           play=Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r10"' not in sw:
+          if 'const CACHE="processpanic-v0.2.0-r11"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r10" not in game:
+          if "./sw.js?v=0.2-r11" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r10" not in play:
+          if "processpanic.html?v=0.2-r11" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
@@ -369,6 +369,24 @@ jobs:
           if missing:
               raise SystemExit("Restart/project menu contract incomplete: "+", ".join(missing))
           print("Restart and project-root menu checks passed")
+          PY
+
+      - name: Check Manual Task hand silhouette
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game=Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "function manualMarker(x,y)",
+              'scale(.58)',
+              'M2 28',
+              'C30.7 7 32 8.3 32 10',
+              'M2 20 C6 18 9 20 12 25'
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Manual Task hand regression: "+", ".join(missing))
+          print("Manual Task hand silhouette check passed")
           PY
 
       - name: Check license attribution
