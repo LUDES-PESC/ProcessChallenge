@@ -127,7 +127,7 @@ jobs:
           from pathlib import Path
           import json
           manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html?v=0.2-r7":
+          if manifest.get("start_url") != "./processpanic.html?v=0.2-r8":
               raise SystemExit("PWA start_url must open the top-level game")
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA display must be standalone")
@@ -207,13 +207,13 @@ jobs:
           sw = Path("sw.js").read_text(encoding="utf-8")
           game = Path("processpanic.html").read_text(encoding="utf-8")
           play = Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r7"' not in sw:
+          if 'const CACHE="processpanic-v0.2.0-r8"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r7" not in game:
+          if "./sw.js?v=0.2-r8" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r7" not in play:
+          if "processpanic.html?v=0.2-r8" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
@@ -296,6 +296,23 @@ jobs:
           if missing:
               raise SystemExit("Random option-order implementation incomplete: " + ", ".join(missing))
           print("Randomized answer-position checks passed")
+          PY
+
+      - name: Check M04 random exclusive execution
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          required = [
+              "m.diagram==='exclusive'&&ok",
+              "const upper=randomInt(2)===0",
+              "[[45,125],[235,125],[370,125],[500,65],[610,65]]",
+              "[[45,125],[235,125],[370,125],[500,185],[610,185]]"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("M04 random exclusive execution incomplete: " + ", ".join(missing))
+          print("M04 random exclusive execution check passed")
           PY
 
       - name: Check license attribution
