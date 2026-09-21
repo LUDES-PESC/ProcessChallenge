@@ -1,10 +1,6 @@
 name: Validate Process Challenge
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -325,7 +321,7 @@ jobs:
           import json
           manifest=json.loads(Path("docs/manifest.webmanifest").read_text(encoding="utf-8"))
           if manifest.get("start_url")!="./processchallenge.html?v=0.2-r12":
-              raise SystemExit("PWA start_url must point to r10")
+              raise SystemExit("PWA start_url must point to r12")
           if manifest.get("display")!="standalone":
               raise SystemExit("PWA display must be standalone")
           if len(manifest.get("icons",[]))<2:
