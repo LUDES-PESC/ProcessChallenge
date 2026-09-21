@@ -1,4 +1,4 @@
-const CACHE="processpanic-v0.2.0-r5";
+const CACHE="processpanic-v0.2.0-r6";
 const ASSETS=[
   "./",
   "./index.html",
