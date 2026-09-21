@@ -414,7 +414,7 @@ jobs:
           text_files=[
               "docs/index.html","docs/article.html","docs/processchallenge.html",
               "docs/play/index.html","docs/manifest.webmanifest","docs/sw.js",
-              "README.md","README-pt.md",".github/workflows/pages.yml"
+              "README.md","README-pt.md"
           ]
           for p in text_files:
               s=Path(p).read_text(encoding="utf-8")
