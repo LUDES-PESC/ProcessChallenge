@@ -127,7 +127,7 @@ jobs:
           from pathlib import Path
           import json
           manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html?v=0.2-r6":
+          if manifest.get("start_url") != "./processpanic.html?v=0.2-r7":
               raise SystemExit("PWA start_url must open the top-level game")
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA display must be standalone")
@@ -207,13 +207,13 @@ jobs:
           sw = Path("sw.js").read_text(encoding="utf-8")
           game = Path("processpanic.html").read_text(encoding="utf-8")
           play = Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r6"' not in sw:
+          if 'const CACHE="processpanic-v0.2.0-r7"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r6" not in game:
+          if "./sw.js?v=0.2-r7" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r6" not in play:
+          if "processpanic.html?v=0.2-r7" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
@@ -238,6 +238,64 @@ jobs:
               if not data[lang].get("game.restartConfirm"):
                   raise SystemExit(f"Missing restart confirmation in {lang}")
           print("Global restart control checks passed")
+          PY
+
+      - name: Check M08 task markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          required = [
+              "function serviceMarker(", "function person(", "function manualMarker(",
+              "function scriptMarker(", "gearPath(", "kind==='service'", "kind==='manual'",
+              "kind==='script'"
+          ]
+          missing = [x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Missing BPMN task marker implementation: " + ", ".join(missing))
+          if game.count("gearPath(") < 3:
+              raise SystemExit("Service Task marker must use two gear outlines")
+          print("M08 BPMN task marker checks passed")
+          PY
+
+      - name: Check M10 target and M13 hidden answers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          lane = re.search(r"function laneSlot\(x,y,w,h\)\{(.*?)\n\}", game, re.S)
+          if not lane or '<rect' not in lane.group(1) or "stroke-dasharray" not in lane.group(1):
+              raise SystemExit("M10 must use a rectangular insertion target")
+          if "laneSlot(66,105,612,40)" not in game:
+              raise SystemExit("M10 diagram does not use the rectangular Lane target")
+          mission = re.search(r"function mission\(\)\{(.*?)\n\}\nfunction revealSelectedChoice", game, re.S)
+          if not mission:
+              raise SystemExit("Could not inspect mission renderer")
+          body = mission.group(1)
+          if "S.optionOrder.map" not in body:
+              raise SystemExit("Mission renderer is not using randomized option order")
+          if "e(id)[0]" in body or "e(id)[1]" in body or "choiceText" in body:
+              raise SystemExit("Answer names/descriptions are present before response")
+          if "mission.option" not in body:
+              raise SystemExit("Generic localized option accessibility label is missing")
+          print("M10 target and M13 hidden-answer checks passed")
+          PY
+
+      - name: Check randomized answer positions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          required = [
+              "function randomInt(n)", "crypto.getRandomValues", "function shuffledOptions(options,previous=[])",
+              "S.optionOrder=shuffledOptions(MISSIONS[i].options,S.optionOrder)",
+              "S.optionOrder=shuffledOptions(m.options,prev)"
+          ]
+          missing = [x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Random option-order implementation incomplete: " + ", ".join(missing))
+          print("Randomized answer-position checks passed")
           PY
 
       - name: Check license attribution
