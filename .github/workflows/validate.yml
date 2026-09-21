@@ -127,7 +127,7 @@ jobs:
           from pathlib import Path
           import json
           manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html?v=0.2-r5":
+          if manifest.get("start_url") != "./processpanic.html?v=0.2-r6":
               raise SystemExit("PWA start_url must open the top-level game")
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA display must be standalone")
@@ -207,15 +207,37 @@ jobs:
           sw = Path("sw.js").read_text(encoding="utf-8")
           game = Path("processpanic.html").read_text(encoding="utf-8")
           play = Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r5"' not in sw:
+          if 'const CACHE="processpanic-v0.2.0-r6"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r5" not in game:
+          if "./sw.js?v=0.2-r6" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r5" not in play:
+          if "processpanic.html?v=0.2-r6" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
+          PY
+
+      - name: Check global restart control
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          if 'id="restartBtn"' not in game:
+              raise SystemExit("Global restart button is missing")
+          if "function restartGame()" not in game or "openMission(0)" not in game:
+              raise SystemExit("Restart behavior is missing or does not return to M01")
+          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=", game, re.S)
+          if not m:
+              raise SystemExit("Could not read I18N")
+          data = json.loads(m.group(1))
+          for lang in ["en","pt","fr","es","it"]:
+              if not data[lang].get("game.restart"):
+                  raise SystemExit(f"Missing restart translation in {lang}")
+              if not data[lang].get("game.restartConfirm"):
+                  raise SystemExit(f"Missing restart confirmation in {lang}")
+          print("Global restart control checks passed")
           PY
 
       - name: Check license attribution
