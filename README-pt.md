@@ -48,7 +48,6 @@ A simbologia BPMN é redesenhada em SVG nativo, usando o BPMN Quick Guide como r
 - `docs/article.html` — artigo
 - `docs/play/` — entrada estável para o jogo
 - `docs/icons/` — ícones da PWA
-- `.github/workflows/pages.yml` — publica somente `docs/`
 - `.github/workflows/validate.yml` — valida jogo e site
 - `AIDisclaimer.md` — declaração de uso de IA
 - `LICENSE` — licença MIT
