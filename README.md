@@ -44,8 +44,12 @@ The game follows the teaching sequence used in the supporting course materials:
 3. **Pools, Lanes and Message Flows**
 4. **Gateway semantics**
 5. **Events**
+6. **Naming activities and events**
+7. **Naming gateways and collaboration**
 
-Every lesson ends with a **lesson debrief**. Completing the fifth lesson opens a separate **final debrief** that revisits the complete route.
+A playthrough always contains **21 missions**, sampled from a larger question bank. Questions are randomly selected and randomly ordered **inside each lesson**, while lesson order remains pedagogical. The Events lesson has a larger quota because it covers many Start, Intermediate, Boundary and End Event variants.
+
+Every lesson ends with an **error-driven lesson debrief**. The final debrief also summarizes recurring confusion patterns.
 
 ## Educational design
 
@@ -73,6 +77,7 @@ The BPMN shapes are redrawn as native SVG. The **BPMN Quick Guide, Second Editio
 
 - **BPMN Quick Guide:** https://www.bpmnquickguide.com/view-bpmn-quick-guide/
 - **OMG BPMN 2.0.2:** https://www.omg.org/spec/BPMN/2.0.2
+- **BPMN Naming Conventions Best Practices:** https://www.bpmnquickguide.com/quickguide/bpmn-quick-guide/bpmn-naming-conventions-best-practices
 
 The game does not embed Quick Guide image assets. Color is reserved for game state and token animation rather than presented as normative BPMN meaning.
 
