@@ -371,24 +371,6 @@ jobs:
           print("Restart and project-root menu checks passed")
           PY
 
-      - name: Check Manual Task hand silhouette
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          game=Path("processpanic.html").read_text(encoding="utf-8")
-          required=[
-              "function manualMarker(x,y)",
-              'scale(.58)',
-              'M2 28',
-              'C30.7 7 32 8.3 32 10',
-              'M2 20 C6 18 9 20 12 25'
-          ]
-          missing=[x for x in required if x not in game]
-          if missing:
-              raise SystemExit("Manual Task hand regression: "+", ".join(missing))
-          print("Manual Task hand silhouette check passed")
-          PY
-
       - name: Check Manual Task hand marker
         run: |
           python - <<'PY'
