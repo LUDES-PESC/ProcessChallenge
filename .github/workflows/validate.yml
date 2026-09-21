@@ -389,6 +389,33 @@ jobs:
           print("Manual Task hand silhouette check passed")
           PY
 
+      - name: Check Manual Task hand marker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          m = re.search(r"function manualMarker\(x,y\)\{(.*?)\n\}", game, re.S)
+          if not m:
+              raise SystemExit("manualMarker function is missing")
+          body = m.group(1)
+          required = [
+              'width="5" height="8"',
+              'stroke-linecap="round"',
+              'x+14.8',
+              'x+22.5',
+              'x+30.2'
+          ]
+          missing = [s for s in required if s not in body]
+          if missing:
+              raise SystemExit("Manual Task hand marker is incomplete: " + ", ".join(missing))
+          if 'scale(.58)' in body:
+              raise SystemExit("Old wing-like Manual Task marker returned")
+          if "manualMarker(x+4,y+6)" not in game:
+              raise SystemExit("Manual Task marker placement is not the refined one")
+          print("Manual Task hand marker checks passed")
+          PY
+
       - name: Check license attribution
         run: |
           grep -F "MIT License" LICENSE
