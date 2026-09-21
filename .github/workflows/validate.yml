@@ -1,0 +1,147 @@
+name: Validate Process Panic
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required project files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          required = [
+              "index.html", "article.html", "play/index.html", "processpanic.html",
+              "manifest.webmanifest", "sw.js", "icons/icon.svg", "icons/icon-192.png",
+              "icons/icon-512.png", "LICENSE", "README.md", "README-pt.md", "AIDisclaimer.md"
+          ]
+          missing = [p for p in required if not Path(p).is_file()]
+          if missing:
+              raise SystemExit("Missing required files: " + ", ".join(missing))
+          print("Required project files present")
+          PY
+
+      - name: Check JavaScript syntax in HTML files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for src in ["processpanic.html", "index.html", "article.html", "play/index.html"]:
+              text = Path(src).read_text(encoding="utf-8")
+              scripts = [s for s in re.findall(r"<script[^>]*>(.*?)</script>", text, re.S | re.I) if s.strip()]
+              Path("/tmp/" + src.replace("/", "_") + ".js").write_text("\n".join(scripts), encoding="utf-8")
+              print(src, len(scripts), "script block(s)")
+          PY
+          for f in /tmp/processpanic.html.js /tmp/index.html.js /tmp/article.html.js /tmp/play_index.html.js; do
+            [ -s "$f" ] && node --check "$f"
+          done
+
+      - name: Validate complete game I18N catalog
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          source = Path("processpanic.html").read_text(encoding="utf-8")
+          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=(\[.*?\]);", source, re.S)
+          if not m:
+              raise SystemExit("Could not isolate I18N and MISSIONS")
+          i18n = json.loads(m.group(1))
+          missions = json.loads(m.group(2))
+          langs = ["en", "pt", "fr", "es", "it"]
+          if list(i18n) != langs:
+              raise SystemExit(f"Expected language order {langs}, got {list(i18n)}")
+
+          def scalar_keys(d):
+              return {k for k,v in d.items() if isinstance(v, str)}
+          base_scalar = scalar_keys(i18n["en"])
+          base_diagram = set(i18n["en"]["diagram"])
+          base_elements = set(i18n["en"]["elements"])
+          for lang in langs:
+              cat = i18n[lang]
+              if scalar_keys(cat) != base_scalar:
+                  raise SystemExit(f"Scalar I18N key mismatch in {lang}")
+              if len(cat.get("lessons", [])) != 5:
+                  raise SystemExit(f"{lang}: expected 5 lessons")
+              if len(cat.get("missions", [])) != 21:
+                  raise SystemExit(f"{lang}: expected 21 missions")
+              if set(cat.get("diagram", {})) != base_diagram:
+                  raise SystemExit(f"Diagram label key mismatch in {lang}")
+              if set(cat.get("elements", {})) != base_elements:
+                  raise SystemExit(f"Element key mismatch in {lang}")
+              for n,row in enumerate(cat["missions"], 1):
+                  if len(row) != 4 or not all(isinstance(x,str) and x.strip() for x in row):
+                      raise SystemExit(f"{lang}: invalid mission {n}")
+              for key,row in cat["elements"].items():
+                  if len(row) != 2 or not all(isinstance(x,str) and x.strip() for x in row):
+                      raise SystemExit(f"{lang}: invalid element {key}")
+          for n,m in enumerate(missions, 1):
+              if len(m.get("options", [])) != 4:
+                  raise SystemExit(f"Mission {n} must have four answer options")
+              if m.get("answer") not in m["options"]:
+                  raise SystemExit(f"Mission {n} answer is not one of its options")
+              unknown = set(m["options"]) - base_elements
+              if unknown:
+                  raise SystemExit(f"Mission {n} uses unknown element ids: {sorted(unknown)}")
+              if m.get("lesson") not in range(5):
+                  raise SystemExit(f"Mission {n} has invalid lesson")
+          print("Game I18N parity passed for five languages, 5 lessons, and 21 missions")
+          PY
+
+      - name: Validate landing page and article I18N parity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          langs = ["en", "pt", "fr", "es", "it"]
+          for name in ["index.html", "article.html"]:
+              source = Path(name).read_text(encoding="utf-8")
+              m = re.search(r"const I18N=(\{.*?\});let lang=", source, re.S)
+              if not m:
+                  raise SystemExit(f"Could not isolate site I18N from {name}")
+              data = json.loads(m.group(1))
+              if set(data) != set(langs):
+                  raise SystemExit(f"{name}: wrong language set")
+              base = set(data["en"])
+              for lang in langs:
+                  if set(data[lang]) != base:
+                      raise SystemExit(f"{name}: key mismatch in {lang}")
+                  if any(not isinstance(v,str) or not v.strip() for v in data[lang].values()):
+                      raise SystemExit(f"{name}: empty/non-string translation in {lang}")
+              print(name, "I18N parity passed")
+          PY
+
+      - name: Check PWA metadata and version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
+          if manifest.get("start_url") != "./processpanic.html":
+              raise SystemExit("PWA start_url must open the top-level game")
+          if manifest.get("display") != "standalone":
+              raise SystemExit("PWA display must be standalone")
+          if len(manifest.get("icons", [])) < 2:
+              raise SystemExit("PWA needs install icons")
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          if 'const VERSION="v0.2"' not in game:
+              raise SystemExit("Game version is not v0.2")
+          if '<div class="topName">Process Panic!</div><div class="topVersion">v0.2</div>' not in game:
+              raise SystemExit("Fixed title/version header contract is missing")
+          print("PWA and version checks passed")
+          PY
+
+      - name: Check license attribution
+        run: |
+          grep -F "MIT License" LICENSE
+          grep -F "Copyright (c) 2026 Geraldo Xexéo" LICENSE
