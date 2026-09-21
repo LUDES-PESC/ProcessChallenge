@@ -141,6 +141,18 @@ jobs:
           print("PWA and version checks passed")
           PY
 
+      - name: Check mission execution selectors
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          if "$('.choice').forEach" in game:
+              raise SystemExit("Invalid selector: use $ for collections before forEach")
+          if "$('.choice').forEach" not in game:
+              raise SystemExit("Mission execution collection selector check is missing")
+          print("Mission execution selector check passed")
+          PY
+
       - name: Check license attribution
         run: |
           grep -F "MIT License" LICENSE
