@@ -391,7 +391,7 @@ jobs:
           missing = [s for s in required if s not in body]
           if missing:
               raise SystemExit("Manual Task hand marker is incomplete: " + ", ".join(missing))
-          if 'scale(.58)' in body:
+          if 'scale(.50)' in body:
               raise SystemExit("Old wing-like Manual Task marker returned")
           if "manualMarker(x+4,y+6)" not in game:
               raise SystemExit("Manual Task marker placement is not the refined one")
