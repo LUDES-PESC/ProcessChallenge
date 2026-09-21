@@ -103,35 +103,42 @@ function person(x,y){
   </g>`;
 }
 function manualMarker(x,y){
-  return `<g transform="translate(${x} ${y}) scale(.58)" fill="#fff" stroke="#15191f" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
-    <path d="
-      M2 28
-      L2 18
-      C2 16.3 3.3 15 5 15
-      C6.7 15 8 16.3 8 18
-      L8 20
-      L8 8
-      C8 6.3 9.3 5 11 5
-      C12.7 5 14 6.3 14 8
-      L14 19
-      L14 5
-      C14 3.3 15.3 2 17 2
-      C18.7 2 20 3.3 20 5
-      L20 19
-      L20 7
-      C20 5.3 21.3 4 23 4
-      C24.7 4 26 5.3 26 7
-      L26 20
-      L26 10
-      C26 8.3 27.3 7 29 7
-      C30.7 7 32 8.3 32 10
-      L32 23
-      C32 29 27.5 34 21.5 34
-      L13.5 34
-      C8 34 4.4 32.1 2 28
-      Z"/>
-    <path d="M2 20 C6 18 9 20 12 25" fill="none"/>
-  </g>`;
+  return `
+    <g fill="#fff" stroke="#15191f" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="${x+2}" y="${y+12}" width="5" height="8" rx="1.2"/>
+      <path d="
+        M ${x+7} ${y+18}
+        C ${x+9} ${y+18}, ${x+10.5} ${y+17}, ${x+11.5} ${y+15.8}
+        L ${x+13.2} ${y+13.7}
+        C ${x+14.2} ${y+12.5}, ${x+14.5} ${y+11.2}, ${x+13.7} ${y+10.2}
+        C ${x+12.8} ${y+9.2}, ${x+11.2} ${y+9.1}, ${x+10.2} ${y+10.2}
+        L ${x+9.2} ${y+11.4}
+        L ${x+9.2} ${y+6.6}
+        C ${x+9.2} ${y+5.0}, ${x+10.4} ${y+3.8}, ${x+12.0} ${y+3.8}
+        C ${x+13.6} ${y+3.8}, ${x+14.8} ${y+5.0}, ${x+14.8} ${y+6.6}
+        L ${x+14.8} ${y+10.0}
+        L ${x+16.9} ${y+10.0}
+        L ${x+16.9} ${y+5.8}
+        C ${x+16.9} ${y+4.2}, ${x+18.1} ${y+3.0}, ${x+19.7} ${y+3.0}
+        C ${x+21.3} ${y+3.0}, ${x+22.5} ${y+4.2}, ${x+22.5} ${y+5.8}
+        L ${x+22.5} ${y+10.0}
+        L ${x+24.6} ${y+10.0}
+        L ${x+24.6} ${y+6.6}
+        C ${x+24.6} ${y+5.0}, ${x+25.8} ${y+3.8}, ${x+27.4} ${y+3.8}
+        C ${x+29.0} ${y+3.8}, ${x+30.2} ${y+5.0}, ${x+30.2} ${y+6.6}
+        L ${x+30.2} ${y+10.0}
+        L ${x+31.8} ${y+10.0}
+        L ${x+31.8} ${y+8.2}
+        C ${x+31.8} ${y+6.7}, ${x+32.9} ${y+5.6}, ${x+34.3} ${y+5.6}
+        C ${x+35.8} ${y+5.6}, ${x+36.9} ${y+6.7}, ${x+36.9} ${y+8.2}
+        L ${x+36.9} ${y+13.2}
+        C ${x+36.9} ${y+15.8}, ${x+35.1} ${y+18.0}, ${x+32.4} ${y+18.0}
+        Z" />
+      <path d="M ${x+14.8} ${y+10.0} L ${x+14.8} ${y+17.2}" />
+      <path d="M ${x+22.5} ${y+10.0} L ${x+22.5} ${y+17.2}" />
+      <path d="M ${x+30.2} ${y+10.0} L ${x+30.2} ${y+17.0}" />
+    </g>
+  `;
 }
 function scriptMarker(x,y){
   return `<g fill="#fff" stroke="#15191f" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
@@ -169,7 +176,7 @@ function task(x,y,w,h,label='',kind='',thick=false){
   let m='';
   if(kind==='service')m=serviceMarker(x+5,y+5);
   if(kind==='user')m=person(x+18,y+20);
-  if(kind==='manual')m=manualMarker(x+5,y+5);
+  if(kind==='manual')m=manualMarker(x+4,y+6);
   if(kind==='script')m=scriptMarker(x+5,y+5);
   if(kind==='sub')m=`<rect x="${x+w/2-7}" y="${y+h-15}" width="14" height="14" fill="#fff" stroke="#15191f"/><path d="M${x+w/2-4} ${y+h-8}h8M${x+w/2} ${y+h-12}v8" stroke="#15191f"/>`;
   return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#fff" stroke="#15191f" stroke-width="${thick?4:2}"/>${m}${label?text(x+w/2,y+h/2+5,label,13):''}</g>`
