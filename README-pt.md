@@ -4,7 +4,7 @@
 
 Versão: **v0.2**
 
-O jogo segue a ordem das aulas: **Introdução → Fluxos, Dados e Atividades → Pools, Raias e Mensagens → Gateways → Eventos**. Há debrief ao final de cada aula e um debrief geral.
+O jogo segue sete aulas: **Introdução → Fluxos, Dados e Atividades → Pools, Raias e Mensagens → Gateways → Eventos → Nomes de Atividades e Eventos → Nomes de Gateways e Colaboração**. Cada partida tem sempre **21 questões**, sorteadas de um banco maior e embaralhadas dentro de cada aula. Há debrief baseado nos erros ao final de cada aula e um debrief geral com padrões de confusão.
 
 ## Idiomas
 
@@ -12,7 +12,7 @@ Toda a interface, opções, feedbacks, debriefs e labels dos diagramas são inte
 
 ## Notação
 
-A simbologia é redesenhada em SVG nativo tomando o [BPMN Quick Guide](https://www.bpmnquickguide.com/view-bpmn-quick-guide/) como referência visual e a OMG BPMN 2.0.2 como referência normativa. O jogo privilegia notação explícita e não usa cor como semântica normativa de BPMN.
+A simbologia é redesenhada em SVG nativo tomando o [BPMN Quick Guide](https://www.bpmnquickguide.com/view-bpmn-quick-guide/) como referência visual e a OMG BPMN 2.0.2 como referência normativa. O jogo privilegia notação explícita e não usa cor como semântica normativa de BPMN. As aulas de nomenclatura também usam as [BPMN Naming Conventions Best Practices](https://www.bpmnquickguide.com/quickguide/bpmn-quick-guide/bpmn-naming-conventions-best-practices).
 
 ## Estrutura
 
