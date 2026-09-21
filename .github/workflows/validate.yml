@@ -127,7 +127,7 @@ jobs:
           from pathlib import Path
           import json
           manifest = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
-          if manifest.get("start_url") != "./processpanic.html?v=0.2-r8":
+          if manifest.get("start_url") != "./processpanic.html?v=0.2-r9":
               raise SystemExit("PWA start_url must open the top-level game")
           if manifest.get("display") != "standalone":
               raise SystemExit("PWA display must be standalone")
@@ -207,13 +207,13 @@ jobs:
           sw = Path("sw.js").read_text(encoding="utf-8")
           game = Path("processpanic.html").read_text(encoding="utf-8")
           play = Path("play/index.html").read_text(encoding="utf-8")
-          if 'const CACHE="processpanic-v0.2.0-r8"' not in sw:
+          if 'const CACHE="processpanic-v0.2.0-r9"' not in sw:
               raise SystemExit("Unexpected service-worker cache version")
           if 'event.request.mode==="navigate"' not in sw or 'fetch(request,{cache:"no-store"})' not in sw:
               raise SystemExit("HTML is not network-first")
-          if "./sw.js?v=0.2-r8" not in game:
+          if "./sw.js?v=0.2-r9" not in game:
               raise SystemExit("Game does not force current service-worker script")
-          if "processpanic.html?v=0.2-r8" not in play:
+          if "processpanic.html?v=0.2-r9" not in play:
               raise SystemExit("Play entry point is not cache-busted")
           print("Service-worker freshness checks passed")
           PY
@@ -313,6 +313,62 @@ jobs:
           if missing:
               raise SystemExit("M04 random exclusive execution incomplete: " + ", ".join(missing))
           print("M04 random exclusive execution check passed")
+          PY
+
+      - name: Check project-root menu link
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          if "['project','⌂','menu.project']" not in game:
+              raise SystemExit("Project-page item is missing from hamburger menu")
+          if "if(id==='project'){location.href='./';return}" not in game:
+              raise SystemExit("Project-page menu action does not navigate to repository Pages root")
+          m = re.search(r"const I18N=(\{.*?\});\nconst MISSIONS=", game, re.S)
+          data=json.loads(m.group(1))
+          for lang in ["en","pt","fr","es","it"]:
+              if not data[lang].get("menu.project"):
+                  raise SystemExit(f"Missing project-page menu translation in {lang}")
+          print("Project-root menu link checks passed")
+          PY
+
+      - name: Check error-driven debrief
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          required=[
+              "wrongChoices=[...(old.wrongChoices||[]),S.selected]",
+              "function missionErrorReview(i)",
+              "function lessonErrorReview(l)",
+              "function finalErrorReview()",
+              "t('debrief.errors')",
+              "t('final.errors')"
+          ]
+          missing=[x for x in required if x not in game]
+          if missing:
+              raise SystemExit("Error-driven debrief implementation incomplete: " + ", ".join(missing))
+          print("Error-driven debrief checks passed")
+          PY
+
+      - name: Check M18 timer-wait scenario
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          game = Path("processpanic.html").read_text(encoding="utf-8")
+          m=re.search(r"const MISSIONS=(\[.*?\]);",game,re.S)
+          missions=json.loads(m.group(1))
+          q=missions[17]
+          if q.get("answer")!="timerIntermediate":
+              raise SystemExit("M18 answer must be timerIntermediate")
+          if "timerIntermediate" not in q.get("options",[]):
+              raise SystemExit("M18 timer option missing")
+          for required in ["m.diagram==='rings'&&ok","await new Promise(r=>setTimeout","dl('reminder')","dl('continue')"]:
+              if required not in game:
+                  raise SystemExit("M18 timer-wait behavior incomplete: "+required)
+          print("M18 timer-wait checks passed")
           PY
 
       - name: Check license attribution
