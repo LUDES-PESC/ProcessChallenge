@@ -8,27 +8,19 @@ Version: **v0.2**
 
 ## Access the project
 
-Once GitHub Pages is enabled for this repository, the public project will be available at:
+The GitHub Pages site is **live**:
 
 - **Project home:** https://ludes-pesc.github.io/ProcessPanic/
 - **Play Process Panic!:** https://ludes-pesc.github.io/ProcessPanic/play/
 - **Direct game URL:** https://ludes-pesc.github.io/ProcessPanic/processpanic.html
 - **Article — educational design:** https://ludes-pesc.github.io/ProcessPanic/article.html
+- **PWA manifest:** https://ludes-pesc.github.io/ProcessPanic/manifest.webmanifest
+- **Service worker:** https://ludes-pesc.github.io/ProcessPanic/sw.js
 
-### GitHub Pages activation
-
-The repository already contains the GitHub Pages deployment workflow, but GitHub requires Pages to be enabled once by a repository administrator.
-
-1. Open: https://github.com/LUDES-PESC/ProcessPanic/settings/pages
-2. Under **Build and deployment**, select **Source: GitHub Actions**.
-3. Re-run the Pages workflow or push a new commit.
-
-Useful workflow links:
+GitHub Actions:
 
 - **Deploy Process Panic! to GitHub Pages:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/pages.yml
 - **Validate Process Panic:** https://github.com/LUDES-PESC/ProcessPanic/actions/workflows/validate.yml
-
-If the public URLs above return 404, check the Pages setting and the deployment workflow first.
 
 ## Repository links
 
