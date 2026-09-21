@@ -416,11 +416,13 @@ jobs:
               "docs/play/index.html","docs/manifest.webmanifest","docs/sw.js",
               "README.md","README-pt.md"
           ]
+          legacy_brand="Process"+" Panic"
+          legacy_slug="process"+"panic"
           for p in text_files:
               s=Path(p).read_text(encoding="utf-8")
-              if "Process Panic" in s or "processpanic" in s.lower():
+              if legacy_brand in s or legacy_slug in s.lower():
                   raise SystemExit(f"Legacy product brand remains in {p}")
-          legacy=["index.html","article.html","processpanic.html","manifest.webmanifest","sw.js","play/index.html"]
+          legacy=["index.html","article.html",legacy_slug+".html","manifest.webmanifest","sw.js","play/index.html"]
           leftovers=[p for p in legacy if Path(p).exists()]
           if leftovers:
               raise SystemExit("Legacy root web files remain: "+", ".join(leftovers))
