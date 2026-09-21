@@ -3,7 +3,7 @@
   "short_name": "Process Panic!",
   "description": "A mobile-first educational BPMN game.",
   "id": "./processpanic.html",
-  "start_url": "./processpanic.html?v=0.2-r7",
+  "start_url": "./processpanic.html?v=0.2-r8",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
